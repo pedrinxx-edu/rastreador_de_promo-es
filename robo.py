@@ -13,7 +13,7 @@ with sync_playwright() as p:
     lista_de_caixas = aba.locator('[data-component-type="s-search-result"]').all()
     conexao = sqlite3.connect("promocoes.db")
     cursor = conexao.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS promocoes (titulo TEXT, preco_antigo REAL, preco_atual REAL, asin TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS promocoes (titulo TEXT, preco_antigo REAL, preco_atual REAL, asin TEXT UNIQUE, enviado INTEGER DEFAULT 0)")
     conexao.commit()
 
     for caixa in lista_de_caixas:
@@ -27,7 +27,7 @@ with sync_playwright() as p:
             preco_atual = preco_atual.replace("R$", "").replace("\xa0", "").replace(".", "").replace(",", ".")            
             preco_atual = float(preco_atual)
             print(f"Promoção! {titulo} | De: {preco_antigo} | Por: {preco_atual}")
-            cursor.execute("INSERT INTO promocoes (titulo, preco_antigo, preco_atual, asin) VALUES (?, ?, ?, ?)", (titulo, preco_antigo, preco_atual, asin))
+            cursor.execute("INSERT OR IGNORE INTO promocoes (titulo, preco_antigo, preco_atual, asin) VALUES (?, ?, ?, ?)", (titulo, preco_antigo, preco_atual, asin))
             conexao.commit()
         except Exception:
             pass
