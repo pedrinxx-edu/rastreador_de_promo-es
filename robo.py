@@ -13,16 +13,21 @@ with sync_playwright() as p:
     lista_de_caixas = aba.locator('[data-component-type="s-search-result"]').all()
     conexao = sqlite3.connect("promocoes.db")
     cursor = conexao.cursor()
-    cursor.execute("CREATE TABLE IF NOT EXISTS promocoes (titulo TEXT, preco_antigo TEXT, preco_atual TEXT)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS promocoes (titulo TEXT, preco_antigo REAL, preco_atual REAL, asin TEXT)")
     conexao.commit()
 
     for caixa in lista_de_caixas:
         titulo = caixa.locator("h2.a-size-base-plus").first.inner_text()
+        asin = caixa.get_attribute("data-asin")
         try:    
             preco_antigo = caixa.locator('[data-a-strike="true"]').first.inner_text(timeout = 1000).split('\n')[0]
+            preco_antigo = preco_antigo.replace("R$", "").replace("\xa0", "").replace(".", "").replace(",", ".")
+            preco_antigo = float(preco_antigo)
             preco_atual = caixa.locator("span.a-price").first.inner_text(timeout = 1000).split("\n")[0]
+            preco_atual = preco_atual.replace("R$", "").replace("\xa0", "").replace(".", "").replace(",", ".")            
+            preco_atual = float(preco_atual)
             print(f"Promoção! {titulo} | De: {preco_antigo} | Por: {preco_atual}")
-            cursor.execute("INSERT INTO promocoes (titulo, preco_antigo, preco_atual) VALUES (?, ?, ?)", (titulo, preco_antigo, preco_atual))
+            cursor.execute("INSERT INTO promocoes (titulo, preco_antigo, preco_atual, asin) VALUES (?, ?, ?, ?)", (titulo, preco_antigo, preco_atual, asin))
             conexao.commit()
         except Exception:
-            pass    
+            pass
